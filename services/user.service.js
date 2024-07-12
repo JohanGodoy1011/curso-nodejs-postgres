@@ -1,51 +1,38 @@
 const boom = require('@hapi/boom');
 
-const getConnection = require('../libs/postgres')
+const {models}= require ('./../libs/sequelize')
 
 class UserService {
-  constructor() {}
+  constructor() {
+  }
 
   async create(data) {
-    return data;
+    const newUser = await models.User.create(data);
+    return newUser;
   }
 
   async find() {
-    const client = await getConnection()
-    const query = `
-    SELECT 
-      r.identificacion, 
-      r.nombres, 
-      r.telefono, 
-      r.email, 
-      r.sexo, 
-      r.estatura, 
-      rp.unidad_militar, 
-      um.nombre as nombre_unidad_militar,
-      rp.fecha_asignacion, 
-      rp.centro_movilizacion,
-      cm.nombre as nombre_centro_movilizacion
-    FROM recluta r
-    JOIN recluta_proceso rp ON r.id = rp.id
-    LEFT JOIN unidad_militar um ON rp.unidad_militar = um.id
-    LEFT JOIN centro_movilizacion cm ON rp.centro_movilizacion = cm.id
-    WHERE r.id = $1;
-  `;
-  const rta = await client.query(query, [128605]);
-    return rta.rows;
+    const rta = await models.User.findAll();
+    return rta;
   }
 
   async findOne(id) {
-    return { id };
+    const user = await models.User.findByPk(id);
+    if(!user){
+      throw boom.notFound('user not found');
+    }
+    return user;
   }
 
   async update(id, changes) {
-    return {
-      id,
-      changes,
-    };
+    const user= await this.findOne(id)
+    const rta= await user.update(changes);
+    return rta;
   }
 
   async delete(id) {
+    const user= await this.findOne(id)
+    await user.destroy; 
     return { id };
   }
 }
